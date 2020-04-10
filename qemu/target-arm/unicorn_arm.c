@@ -92,6 +92,10 @@ int arm_reg_read(struct uc_struct *uc, unsigned int *regs, void **vals, int coun
                 case UC_ARM_REG_C1_C0_2:
                     *(int32_t *)value = ARM_CPU(uc, mycpu)->env.cp15.c1_coproc;
                     break;
+                //case UC_ARM_REG_VBAR:
+                case UC_ARM_REG_C12_C0_0: /** @todo Only correct for ARMv7 (the only thing we care about) */
+                    *(int32_t *)value = ARM_CPU(uc, mycpu)->env.cp15.vbar_el[1];
+                    break;
                 case UC_ARM_REG_C13_C0_3:
                     *(int32_t *)value = ARM_CPU(uc, mycpu)->env.cp15.tpidrro_el0;
                     break;
@@ -161,6 +165,11 @@ int arm_reg_write(struct uc_struct *uc, unsigned int *regs, void* const* vals, i
                     break;
                 case UC_ARM_REG_C1_C0_2:
                     ARM_CPU(uc, mycpu)->env.cp15.c1_coproc = *(int32_t *)value;
+                    break;
+
+                //case UC_ARM_REG_VBAR:
+                case UC_ARM_REG_C12_C0_0: /** @todo Only correct for ARMv7 (the only thing we care about) */
+                    ARM_CPU(uc, mycpu)->env.cp15.vbar_el[1] = *(int32_t *)value;
                     break;
 
                 case UC_ARM_REG_C13_C0_3:

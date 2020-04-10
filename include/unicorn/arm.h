@@ -130,6 +130,7 @@ typedef enum uc_arm_reg {
     UC_ARM_REG_S31,
 
     UC_ARM_REG_C1_C0_2,
+    UC_ARM_REG_C12_C0_0,
     UC_ARM_REG_C13_C0_2,
     UC_ARM_REG_C13_C0_3,
 
@@ -148,6 +149,8 @@ typedef enum uc_arm_reg {
     UC_ARM_REG_SL = UC_ARM_REG_R10,
     UC_ARM_REG_FP = UC_ARM_REG_R11,
     UC_ARM_REG_IP = UC_ARM_REG_R12,
+
+    UC_ARM_REG_VBAR = UC_ARM_REG_C12_C0_0
 } uc_arm_reg;
 
 #ifdef __cplusplus
