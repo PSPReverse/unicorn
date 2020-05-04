@@ -15,6 +15,11 @@ extern "C" {
 #pragma warning(disable:4201)
 #endif
 
+// Callback function for tracing writes to cp15 (for uc_hook_intr())
+// @user_data: user data passed to tracing APIs.
+typedef void (*uc_cb_cp_write_t)(struct uc_struct *uc, uint64_t addr, uint32_t cp, uint32_t crn, uint32_t crm,
+                                 uint32_t opc0, uint32_t opc1, uint32_t opc2, uint64_t val, void *user_data);
+
 //> ARM registers
 typedef enum uc_arm_reg {
     UC_ARM_REG_INVALID = 0,
@@ -129,7 +134,11 @@ typedef enum uc_arm_reg {
     UC_ARM_REG_S30,
     UC_ARM_REG_S31,
 
+    UC_ARM_REG_C1_C0_0,
     UC_ARM_REG_C1_C0_2,
+    UC_ARM_REG_C2_C0_0,
+    UC_ARM_REG_C2_C0_1,
+    UC_ARM_REG_C2_C0_2,
     UC_ARM_REG_C12_C0_0,
     UC_ARM_REG_C13_C0_2,
     UC_ARM_REG_C13_C0_3,
@@ -150,6 +159,10 @@ typedef enum uc_arm_reg {
     UC_ARM_REG_FP = UC_ARM_REG_R11,
     UC_ARM_REG_IP = UC_ARM_REG_R12,
 
+    UC_ARM_REG_SCTRL = UC_ARM_REG_C1_C0_0,
+    UC_ARM_REG_TTBR0 = UC_ARM_REG_C2_C0_0,
+    UC_ARM_REG_TTBR1 = UC_ARM_REG_C2_C0_1,
+    UC_ARM_REG_TTBCR = UC_ARM_REG_C2_C0_2,
     UC_ARM_REG_VBAR = UC_ARM_REG_C12_C0_0
 } uc_arm_reg;
 

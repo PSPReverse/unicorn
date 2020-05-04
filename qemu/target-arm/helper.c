@@ -7,6 +7,7 @@
 #include "qemu/crc32c.h"
 #include "exec/cpu_ldst.h"
 #include "arm_ldst.h"
+#include "uc_priv.h"
 
 #ifndef CONFIG_USER_ONLY
 static inline int get_phys_addr(CPUARMState *env, target_ulong address,
@@ -32,6 +33,16 @@ static uint64_t raw_read(CPUARMState *env, const ARMCPRegInfo *ri)
 static void raw_write(CPUARMState *env, const ARMCPRegInfo *ri,
                       uint64_t value)
 {
+    struct hook *hook;
+    HOOK_FOREACH_VAR_DECLARE;
+    struct uc_struct *uc = env->uc;
+
+    HOOK_FOREACH(uc, hook, UC_HOOK_ARM_CP15_WRITE) {
+        if (!HOOK_BOUND_CHECK(hook, env->pc))
+            continue;
+        ((uc_cb_cp_write_t)hook->callback)(uc, env->pc, ri->cp, ri->crn, ri->crm, ri->opc0, ri->opc1, ri->opc2, value, hook->user_data);
+    }
+
     if (cpreg_field_is_64bit(ri)) {
         CPREG_FIELD64(env, ri) = value;
     } else {

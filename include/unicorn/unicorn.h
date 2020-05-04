@@ -263,6 +263,9 @@ typedef enum uc_hook_type {
     UC_HOOK_MEM_READ_AFTER = 1 << 13,
     // Hook invalid instructions exceptions.
     UC_HOOK_INSN_INVALID = 1 << 14,
+    // Hook cp15 writes on ARM.
+    // The callback will be triggered before a write.
+    UC_HOOK_ARM_CP15_WRITE = 1 << 15
 } uc_hook_type;
 
 // Hook type for all events of unmapped memory access

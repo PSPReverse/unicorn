@@ -89,8 +89,24 @@ int arm_reg_read(struct uc_struct *uc, unsigned int *regs, void **vals, int coun
                 case UC_ARM_REG_R15:
                     *(int32_t *)value = ARM_CPU(uc, mycpu)->env.regs[15];
                     break;
+                // case UC_ARM_REG_SCTRL:
+                case UC_ARM_REG_C1_C0_0:
+                    *(uint32_t *)value = ARM_CPU(uc, mycpu)->env.cp15.c1_sys;
+                    break;
                 case UC_ARM_REG_C1_C0_2:
                     *(int32_t *)value = ARM_CPU(uc, mycpu)->env.cp15.c1_coproc;
+                    break;
+                //case UC_ARM_REG_TTBR0:
+                case UC_ARM_REG_C2_C0_0:
+                    *(uint32_t *)value = ARM_CPU(uc, mycpu)->env.cp15.ttbr0_el1;
+                    break;
+                //case UC_ARM_REG_TTBR1:
+                case UC_ARM_REG_C2_C0_1:
+                    *(uint32_t *)value = ARM_CPU(uc, mycpu)->env.cp15.ttbr1_el1;
+                    break;
+                //case UC_ARM_REG_TTBCR:
+                case UC_ARM_REG_C2_C0_2:
+                    *(uint32_t *)value = ARM_CPU(uc, mycpu)->env.cp15.c2_control;
                     break;
                 //case UC_ARM_REG_VBAR:
                 case UC_ARM_REG_C12_C0_0: /** @todo Only correct for ARMv7 (the only thing we care about) */
@@ -163,10 +179,25 @@ int arm_reg_write(struct uc_struct *uc, unsigned int *regs, void* const* vals, i
                     uc_emu_stop(uc);
 
                     break;
+                // case UC_ARM_REG_SCTRL:
+                case UC_ARM_REG_C1_C0_0:
+                    ARM_CPU(uc, mycpu)->env.cp15.c1_sys = *(uint32_t *)value;
+                    break;
                 case UC_ARM_REG_C1_C0_2:
                     ARM_CPU(uc, mycpu)->env.cp15.c1_coproc = *(int32_t *)value;
                     break;
-
+                //case UC_ARM_REG_TTBR0:
+                case UC_ARM_REG_C2_C0_0:
+                    ARM_CPU(uc, mycpu)->env.cp15.ttbr0_el1 = *(uint32_t *)value;
+                    break;
+                //case UC_ARM_REG_TTBR1:
+                case UC_ARM_REG_C2_C0_1:
+                    ARM_CPU(uc, mycpu)->env.cp15.ttbr1_el1 = *(uint32_t *)value;
+                    break;
+                //case UC_ARM_REG_TTBCR:
+                case UC_ARM_REG_C2_C0_2:
+                    ARM_CPU(uc, mycpu)->env.cp15.c2_control = *(uint32_t *)value;
+                    break;
                 //case UC_ARM_REG_VBAR:
                 case UC_ARM_REG_C12_C0_0: /** @todo Only correct for ARMv7 (the only thing we care about) */
                     ARM_CPU(uc, mycpu)->env.cp15.vbar_el[1] = *(int32_t *)value;
