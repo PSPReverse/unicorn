@@ -108,11 +108,12 @@ typedef enum uc_mode {
     UC_MODE_THUMB = 1 << 4,       // THUMB mode (including Thumb-2)
     UC_MODE_MCLASS = 1 << 5,      // ARM's Cortex-M series (currently unsupported)
     UC_MODE_V8 = 1 << 6,          // ARMv8 A32 encodings for ARM (currently unsupported)
+    UC_MODE_ARM_NO_MMU = 1 << 7,  // Force no MMU usage regardless of the MMU enable bit in SCTRL
 
     // arm (32bit) cpu types
-    UC_MODE_ARM926 = 1 << 7,	  // ARM926 CPU type
-    UC_MODE_ARM946 = 1 << 8,	  // ARM946 CPU type
-    UC_MODE_ARM1176 = 1 << 9,	  // ARM1176 CPU type
+    UC_MODE_ARM926 = 1 << 8,	  // ARM926 CPU type
+    UC_MODE_ARM946 = 1 << 9,	  // ARM946 CPU type
+    UC_MODE_ARM1176 = 1 << 10,	  // ARM1176 CPU type
 
     // mips
     UC_MODE_MICRO = 1 << 4,       // MicroMips mode (currently unsupported)

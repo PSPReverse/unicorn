@@ -4277,7 +4277,9 @@ static inline int get_phys_addr(CPUARMState *env, target_ulong address,
     if (address < 0x02000000)
         address += env->cp15.c13_fcse;
 
-    if ((env->cp15.c1_sys & SCTLR_M) == 0) {
+    struct uc_struct *uc = env->uc;
+    if (   (env->cp15.c1_sys & SCTLR_M) == 0
+        || (uc->mode & UC_MODE_ARM_NO_MMU)) {
         /* MMU/MPU disabled.  */
         *phys_ptr = address;
         *prot = PAGE_READ | PAGE_WRITE | PAGE_EXEC;
