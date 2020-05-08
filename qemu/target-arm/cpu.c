@@ -675,6 +675,7 @@ static void cortex_a8_initfn(struct uc_struct *uc, Object *obj, void *opaque)
     cpu->ccsidr[1] = 0x2007e01a; /* 16k L1 icache. */
     cpu->ccsidr[2] = 0xf0000000; /* No L2 icache. */
     cpu->reset_auxcr = 2;
+    cpu->reset_nsacr = 0x0;
     define_arm_cp_regs(cpu, cortexa8_cp_reginfo);
 }
 

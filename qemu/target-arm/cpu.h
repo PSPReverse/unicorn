@@ -180,6 +180,7 @@ typedef struct CPUARMState {
         uint64_t c0_cssel; /* Cache size selection.  */
         uint64_t c1_sys; /* System control register.  */
         uint64_t c1_coproc; /* Coprocessor access register.  */
+        uint32_t c1_nsacr; /* Non-Secure access control register.  */
         uint32_t c1_xscaleauxcr; /* XScale auxiliary control register.  */
         uint64_t ttbr0_el1; /* MMU translation table base 0. */
         uint64_t ttbr1_el1; /* MMU translation table base 1. */

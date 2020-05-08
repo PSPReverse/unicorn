@@ -7302,18 +7302,12 @@ static int disas_coproc_insn(DisasContext *s, uint32_t insn)
             if (is64) {
                 TCGv_i64 tmp64;
                 TCGv_i32 tmp;
-                if (ri->type & ARM_CP_CONST) {
-                    tmp64 = tcg_const_i64(tcg_ctx, ri->resetvalue);
-                } else if (ri->readfn) {
-                    TCGv_ptr tmpptr;
-                    tmp64 = tcg_temp_new_i64(tcg_ctx);
-                    tmpptr = tcg_const_ptr(tcg_ctx, ri);
-                    gen_helper_get_cp_reg64(tcg_ctx, tmp64, tcg_ctx->cpu_env, tmpptr);
-                    tcg_temp_free_ptr(tcg_ctx, tmpptr);
-                } else {
-                    tmp64 = tcg_temp_new_i64(tcg_ctx);
-                    tcg_gen_ld_i64(tcg_ctx, tmp64, tcg_ctx->cpu_env, ri->fieldoffset);
-                }
+                TCGv_ptr tmpptr;
+                tmp64 = tcg_temp_new_i64(tcg_ctx);
+                tmpptr = tcg_const_ptr(tcg_ctx, ri);
+                gen_helper_get_cp_reg64(tcg_ctx, tmp64, tcg_ctx->cpu_env, tmpptr);
+                tcg_temp_free_ptr(tcg_ctx, tmpptr);
+
                 tmp = tcg_temp_new_i32(tcg_ctx);
                 tcg_gen_trunc_i64_i32(tcg_ctx, tmp, tmp64);
                 store_reg(s, rt, tmp);
@@ -7324,17 +7318,11 @@ static int disas_coproc_insn(DisasContext *s, uint32_t insn)
                 store_reg(s, rt2, tmp);
             } else {
                 TCGv_i32 tmp;
-                if (ri->type & ARM_CP_CONST) {
-                    tmp = tcg_const_i32(tcg_ctx, ri->resetvalue);
-                } else if (ri->readfn) {
-                    TCGv_ptr tmpptr;
-                    tmp = tcg_temp_new_i32(tcg_ctx);
-                    tmpptr = tcg_const_ptr(tcg_ctx, ri);
-                    gen_helper_get_cp_reg(tcg_ctx, tmp, tcg_ctx->cpu_env, tmpptr);
-                    tcg_temp_free_ptr(tcg_ctx, tmpptr);
-                } else {
-                    tmp = load_cpu_offset(s->uc, ri->fieldoffset);
-                }
+                TCGv_ptr tmpptr;
+                tmp = tcg_temp_new_i32(tcg_ctx);
+                tmpptr = tcg_const_ptr(tcg_ctx, ri);
+                gen_helper_get_cp_reg(tcg_ctx, tmp, tcg_ctx->cpu_env, tmpptr);
+                tcg_temp_free_ptr(tcg_ctx, tmpptr);
                 if (rt == 15) {
                     /* Destination register of r15 for 32 bit loads sets
                      * the condition codes from the high 4 bits of the value
@@ -7360,27 +7348,20 @@ static int disas_coproc_insn(DisasContext *s, uint32_t insn)
                 tcg_gen_concat_i32_i64(tcg_ctx, tmp64, tmplo, tmphi);
                 tcg_temp_free_i32(tcg_ctx, tmplo);
                 tcg_temp_free_i32(tcg_ctx, tmphi);
-                if (ri->writefn) {
-                    TCGv_ptr tmpptr = tcg_const_ptr(tcg_ctx, ri);
-                    gen_helper_set_cp_reg64(tcg_ctx, tcg_ctx->cpu_env, tmpptr, tmp64);
-                    tcg_temp_free_ptr(tcg_ctx, tmpptr);
-                } else {
-                    tcg_gen_st_i64(tcg_ctx, tmp64, tcg_ctx->cpu_env, ri->fieldoffset);
-                }
+
+                TCGv_ptr tmpptr = tcg_const_ptr(tcg_ctx, ri);
+                gen_helper_set_cp_reg64(tcg_ctx, tcg_ctx->cpu_env, tmpptr, tmp64);
+                tcg_temp_free_ptr(tcg_ctx, tmpptr);
+
                 tcg_temp_free_i64(tcg_ctx, tmp64);
             } else {
-                if (ri->writefn) {
-                    TCGv_i32 tmp;
-                    TCGv_ptr tmpptr;
-                    tmp = load_reg(s, rt);
-                    tmpptr = tcg_const_ptr(tcg_ctx, ri);
-                    gen_helper_set_cp_reg(tcg_ctx, tcg_ctx->cpu_env, tmpptr, tmp);
-                    tcg_temp_free_ptr(tcg_ctx, tmpptr);
-                    tcg_temp_free_i32(tcg_ctx, tmp);
-                } else {
-                    TCGv_i32 tmp = load_reg(s, rt);
-                    store_cpu_offset(tcg_ctx, tmp, ri->fieldoffset);
-                }
+                TCGv_i32 tmp;
+                TCGv_ptr tmpptr;
+                tmp = load_reg(s, rt);
+                tmpptr = tcg_const_ptr(tcg_ctx, ri);
+                gen_helper_set_cp_reg(tcg_ctx, tcg_ctx->cpu_env, tmpptr, tmp);
+                tcg_temp_free_ptr(tcg_ctx, tmpptr);
+                tcg_temp_free_i32(tcg_ctx, tmp);
             }
         }
 

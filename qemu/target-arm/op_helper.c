@@ -327,32 +327,111 @@ void HELPER(access_check_cp_reg)(CPUARMState *env, void *rip, uint32_t syndrome)
     raise_exception(env, EXCP_UDEF);
 }
 
+static uint64_t raw_read(CPUARMState *env, const ARMCPRegInfo *ri)
+{
+    if (cpreg_field_is_64bit(ri)) {
+        return CPREG_FIELD64(env, ri);
+    } else {
+        return CPREG_FIELD32(env, ri);
+    }
+}
+
+static void raw_write(CPUARMState *env, const ARMCPRegInfo *ri,
+               uint64_t value)
+{
+    if (cpreg_field_is_64bit(ri)) {
+        CPREG_FIELD64(env, ri) = value;
+    } else {
+        CPREG_FIELD32(env, ri) = value;
+    }
+}
+
+static bool unicorn_cp_write(CPUARMState *env, const ARMCPRegInfo *ri, uint64_t value)
+{
+    bool handled = false;
+    struct hook *hook;
+    HOOK_FOREACH_VAR_DECLARE;
+    struct uc_struct *uc = env->uc;
+
+    HOOK_FOREACH(uc, hook, UC_HOOK_ARM_CP_WRITE) {
+        if (!HOOK_BOUND_CHECK(hook, env->pc))
+            continue;
+        if ((handled = ((uc_cb_cp_write_t)hook->callback)(uc, env->pc, ri->cp, ri->crn, ri->crm, ri->opc0, ri->opc1, ri->opc2, value, hook->user_data)))
+            break;
+    }
+
+    return handled;
+}
+
+static bool unicorn_cp_read(CPUARMState *env, const ARMCPRegInfo *ri, uint64_t *value)
+{
+    bool handled = false;
+    struct hook *hook;
+    HOOK_FOREACH_VAR_DECLARE;
+    struct uc_struct *uc = env->uc;
+
+    HOOK_FOREACH(uc, hook, UC_HOOK_ARM_CP_READ) {
+        if (!HOOK_BOUND_CHECK(hook, env->pc))
+            continue;
+        if ((handled = ((uc_cb_cp_read_t)hook->callback)(uc, env->pc, ri->cp, ri->crn, ri->crm, ri->opc0, ri->opc1, ri->opc2, value, hook->user_data)))
+            break;
+    }
+
+    return handled;
+}
+
 void HELPER(set_cp_reg)(CPUARMState *env, void *rip, uint32_t value)
 {
     const ARMCPRegInfo *ri = rip;
 
-    ri->writefn(env, ri, value);
+    if (unicorn_cp_write(env, ri, value))
+        return;
+
+    if (ri->writefn)
+        ri->writefn(env, ri, value);
+    else
+        raw_write(env, ri, value);
 }
 
 uint32_t HELPER(get_cp_reg)(CPUARMState *env, void *rip)
 {
     const ARMCPRegInfo *ri = rip;
 
-    return ri->readfn(env, ri);
+    uint64_t value;
+    if (unicorn_cp_read(env, ri, &value))
+        return (uint32_t)value;
+
+    if (ri->readfn)
+        return ri->readfn(env, ri);
+    else
+        return raw_read(env, ri);
 }
 
 void HELPER(set_cp_reg64)(CPUARMState *env, void *rip, uint64_t value)
 {
     const ARMCPRegInfo *ri = rip;
 
-    ri->writefn(env, ri, value);
+    if (unicorn_cp_write(env, ri, value))
+        return;
+
+    if (ri->writefn)
+        ri->writefn(env, ri, value);
+    else
+        raw_write(env, ri, value);
 }
 
 uint64_t HELPER(get_cp_reg64)(CPUARMState *env, void *rip)
 {
     const ARMCPRegInfo *ri = rip;
 
-    return ri->readfn(env, ri);
+    uint64_t value;
+    if (unicorn_cp_read(env, ri, &value))
+        return value;
+
+    if (ri->readfn)
+        return ri->readfn(env, ri);
+    else
+        return raw_read(env, ri);
 }
 
 void HELPER(msr_i_pstate)(CPUARMState *env, uint32_t op, uint32_t imm)

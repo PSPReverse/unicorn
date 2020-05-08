@@ -33,16 +33,6 @@ static uint64_t raw_read(CPUARMState *env, const ARMCPRegInfo *ri)
 static void raw_write(CPUARMState *env, const ARMCPRegInfo *ri,
                       uint64_t value)
 {
-    struct hook *hook;
-    HOOK_FOREACH_VAR_DECLARE;
-    struct uc_struct *uc = env->uc;
-
-    HOOK_FOREACH(uc, hook, UC_HOOK_ARM_CP15_WRITE) {
-        if (!HOOK_BOUND_CHECK(hook, env->pc))
-            continue;
-        ((uc_cb_cp_write_t)hook->callback)(uc, env->pc, ri->cp, ri->crn, ri->crm, ri->opc0, ri->opc1, ri->opc2, value, hook->user_data);
-    }
-
     if (cpreg_field_is_64bit(ri)) {
         CPREG_FIELD64(env, ri) = value;
     } else {
@@ -2734,6 +2724,13 @@ void register_cp_regs_for_features(ARMCPU *cpu)
             sctlr.type |= ARM_CP_SUPPRESS_TB_END;
         }
         define_one_arm_cp_reg(cpu, &sctlr);
+
+        ARMCPRegInfo nsacr = {
+            "NSACR", 0,1,1, 3,0,2, ARM_CP_STATE_BOTH,
+            0, PL1_RW, NULL, cpu->reset_nsacr, offsetof(CPUARMState, cp15.c1_nsacr),
+            NULL, NULL,raw_write, NULL,raw_write, NULL
+        };
+        define_one_arm_cp_reg(cpu, &nsacr);
     }
 }
 
