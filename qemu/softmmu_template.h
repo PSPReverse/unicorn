@@ -693,15 +693,16 @@ void helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
     HOOK_FOREACH_VAR_DECLARE;
 
     struct uc_struct *uc = env->uc;
-    MemoryRegion *mr = memory_mapping(uc, addr);
 
     // Unicorn: callback on memory write
     HOOK_FOREACH(uc, hook, UC_HOOK_MEM_WRITE) {
             if (!HOOK_BOUND_CHECK(hook, addr))
                 continue;
         ((uc_cb_hookmem_t)hook->callback)(uc, UC_MEM_WRITE, addr, DATA_SIZE, val, hook->user_data);
+        tlb_flush(ENV_GET_CPU(env), 1);
     }
 
+    MemoryRegion *mr = memory_mapping(uc, addr);
     // Unicorn: callback on invalid memory
     if (mr == NULL) {
         handled = false;
@@ -750,8 +751,11 @@ void helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
     retaddr -= GETPC_ADJ;
 
     /* If the TLB entry is for a different page, reload and try again.  */
+    /* If the TLB entry addend is invalidated by any callbacks (perhaps due to
+       a TLB flush), reload and try again.  */
     if ((addr & TARGET_PAGE_MASK)
-        != (tlb_addr & (TARGET_PAGE_MASK | TLB_INVALID_MASK))) {
+        != (tlb_addr & (TARGET_PAGE_MASK | TLB_INVALID_MASK))
+        || env->tlb_table[mmu_idx][index].addend == -1) {
 #ifdef ALIGNED_ONLY
         if ((addr & (DATA_SIZE - 1)) != 0) {
             //cpu_unaligned_access(ENV_GET_CPU(env), addr, MMU_DATA_STORE,
@@ -852,7 +856,6 @@ void helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
     HOOK_FOREACH_VAR_DECLARE;
 
     struct uc_struct *uc = env->uc;
-    MemoryRegion *mr = memory_mapping(uc, addr);
 
     // Unicorn: callback on memory write
     HOOK_FOREACH(uc, hook, UC_HOOK_MEM_WRITE) {
@@ -861,6 +864,7 @@ void helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
         ((uc_cb_hookmem_t)hook->callback)(uc, UC_MEM_WRITE, addr, DATA_SIZE, val, hook->user_data);
     }
 
+    MemoryRegion *mr = memory_mapping(uc, addr);
     // Unicorn: callback on invalid memory
     if (mr == NULL) {
         handled = false;

@@ -753,7 +753,7 @@ static const ARMCPRegInfo v7_cp_reginfo[] = {
       ARM_CP_NO_MIGRATE, PL1_RW, NULL, 0, offsetof(CPUARMState, cp15.c9_pminten),
       NULL, NULL, pmintenclr_write, },
     { "VBAR", 0,12,0, 3,0,0, ARM_CP_STATE_BOTH,
-      0, PL1_RW, NULL, 0, offsetof(CPUARMState, cp15.vbar_el[1]),
+      ARM_CP_OVERRIDE, PL1_RW, NULL, 0, offsetof(CPUARMState, cp15.vbar_el[1]),
       NULL, NULL, vbar_write, },
     { "SCR", 15,1,1, 0,0,0, 0,
       0, PL1_RW, NULL, 0, offsetoflow32(CPUARMState, cp15.scr_el3),
@@ -793,7 +793,7 @@ static const ARMCPRegInfo v7_cp_reginfo[] = {
       ARM_CP_OVERRIDE, PL1_RW, NULL, 0, offsetofhigh32(CPUARMState, cp15.mair_el1),
       NULL, NULL, NULL, NULL, NULL, arm_cp_reset_ignore },
     { "ISR_EL1", 0,12,1, 3,0,0, ARM_CP_STATE_BOTH,
-      ARM_CP_NO_MIGRATE, PL1_R, NULL, 0, 0,
+      ARM_CP_NO_MIGRATE | ARM_CP_OVERRIDE, PL1_R, NULL, 0, 0,
       NULL, isr_read },
     /* 32 bit ITLB invalidates */
     { "ITLBIALL", 15,8,5, 0,0,0, 0,
@@ -2726,11 +2726,18 @@ void register_cp_regs_for_features(ARMCPU *cpu)
         define_one_arm_cp_reg(cpu, &sctlr);
 
         ARMCPRegInfo nsacr = {
-            "NSACR", 0,1,1, 3,0,2, ARM_CP_STATE_BOTH,
+            "NSACR", 15,1,1, 3,0,2, ARM_CP_STATE_BOTH,
             0, PL1_RW, NULL, cpu->reset_nsacr, offsetof(CPUARMState, cp15.c1_nsacr),
-            NULL, NULL,raw_write, NULL,raw_write, NULL
+            NULL, NULL,NULL, NULL,NULL, NULL
         };
         define_one_arm_cp_reg(cpu, &nsacr);
+
+        ARMCPRegInfo trust_zone = {
+            "TRSTZ", 15, 12, CP_ANY, 0, CP_ANY, CP_ANY, ARM_CP_STATE_BOTH,
+            0, PL1_RW, NULL, cpu->reset_nsacr, offsetof(CPUARMState, cp15.c1_nsacr),
+            NULL, NULL,NULL, NULL,NULL, NULL
+        };
+        define_one_arm_cp_reg(cpu, &trust_zone);
     }
 }
 
@@ -2938,7 +2945,7 @@ void define_one_arm_cp_reg_with_opaque(ARMCPU *cpu,
     if (r->state != ARM_CP_STATE_AA32) {
         int mask = 0;
         switch (r->opc1) {
-        case 0: case 1: case 2:
+        case 0: case 1: case 2: case CP_ANY:
             /* min_EL EL1 */
             mask = PL1_RW;
             break;
@@ -2964,7 +2971,7 @@ void define_one_arm_cp_reg_with_opaque(ARMCPU *cpu,
             break;
         default:
             /* broken reginfo with out-of-range opc1 */
-            assert(false);
+            //assert(false);
             break;
         }
         /* assert our permissions are not too lax (stricter is fine) */
@@ -3105,6 +3112,17 @@ void cpsr_write(CPUARMState *env, uint32_t val, uint32_t mask)
     }
     mask &= ~CACHED_CPSR_BITS;
     env->uncached_cpsr = (env->uncached_cpsr & ~mask) | (val & mask);
+
+    struct hook *hook;
+    HOOK_FOREACH_VAR_DECLARE;
+    struct uc_struct *uc = env->uc;
+
+    HOOK_FOREACH(uc, hook, UC_HOOK_ARM_CPSR_WRITE) {
+        if (!HOOK_BOUND_CHECK(hook, env->pc))
+            continue;
+        if (((uc_cb_cpsr_write_t)hook->callback)(uc, env->pc, env->uncached_cpsr, hook->user_data))
+            break;
+    }
 }
 
 /* Sign/zero extend */

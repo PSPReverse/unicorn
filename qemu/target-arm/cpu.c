@@ -343,6 +343,7 @@ static int arm_cpu_realizefn(struct uc_struct *uc, DeviceState *dev, Error **err
         set_feature(env, ARM_FEATURE_VAPA);
         set_feature(env, ARM_FEATURE_THUMB2);
         set_feature(env, ARM_FEATURE_MPIDR);
+        set_feature(env, ARM_FEATURE_EL3);
         if (!arm_feature(env, ARM_FEATURE_M)) {
             set_feature(env, ARM_FEATURE_V6K);
         } else {

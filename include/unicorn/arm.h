@@ -25,6 +25,11 @@ typedef bool (*uc_cb_cp_write_t)(struct uc_struct *uc, uint64_t addr, uint32_t c
 typedef bool (*uc_cb_cp_read_t)(struct uc_struct *uc, uint64_t addr, uint32_t cp, uint32_t crn, uint32_t crm,
                                  uint32_t opc0, uint32_t opc1, uint32_t opc2, uint64_t *val, void *user_data);
 
+// Callback function for tracing cpsr writes (for uc_hook_intr())
+// @user_data: user data passed to tracing APIs.
+typedef bool (*uc_cb_cpsr_write_t)(struct uc_struct *uc, uint64_t addr, uint32_t cpsr, void *user_data);
+
+
 //> ARM registers
 typedef enum uc_arm_reg {
     UC_ARM_REG_INVALID = 0,

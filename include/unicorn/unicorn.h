@@ -269,7 +269,10 @@ typedef enum uc_hook_type {
     UC_HOOK_ARM_CP_WRITE = 1 << 15,
     // Hook cp reads on ARM.
     // The callback will be triggered before a write.
-    UC_HOOK_ARM_CP_READ = 1 << 16
+    UC_HOOK_ARM_CP_READ = 1 << 16,
+    // Hook cpsr changes on ARM.
+    // The callback will be triggered afterwards.
+    UC_HOOK_ARM_CPSR_WRITE = 1 << 17
 } uc_hook_type;
 
 // Hook type for all events of unmapped memory access
