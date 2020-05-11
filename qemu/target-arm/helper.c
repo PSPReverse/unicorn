@@ -3120,7 +3120,7 @@ void cpsr_write(CPUARMState *env, uint32_t val, uint32_t mask)
     HOOK_FOREACH(uc, hook, UC_HOOK_ARM_CPSR_WRITE) {
         if (!HOOK_BOUND_CHECK(hook, env->pc))
             continue;
-        if (((uc_cb_cpsr_write_t)hook->callback)(uc, env->pc, env->uncached_cpsr, hook->user_data))
+        if (((uc_cb_cpsr_write_t)hook->callback)(uc, env->pc, cpsr_read(env), hook->user_data))
             break;
     }
 }
